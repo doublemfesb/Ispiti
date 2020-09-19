@@ -1,0 +1,84 @@
+/***
+Napisati program kojim se
+a) Slučajnim uzorkom generira 10 brojeva iz opsega od 300 do 700, te ih sprema u binarno stablo
+pretraživanja.Zatim ispišemo to stablo u preorder načinu ispisa.
+b) Iz generiranog stabla pretraživanja izbrisati sve elemente koji su zapisani u proizvoljno
+definiranoj datoteci.
+**/
+
+#define _CRT_SECURE_NO_WARNINGS
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+#define GRESKAALOKACIJE -1
+#define NEPOSTOJI -2
+#define BUFFER 1024
+
+struct _cvor;
+typedef struct _cvor* Stablo;
+typedef struct _cvor
+{
+	int broj;
+	Stablo L;
+	Stablo D;
+
+}Cvor;
+
+void IspisPreorder(Stablo);
+Stablo UnosUStablo(Stablo, int, int*);
+int Generiraj(int, int);
+
+int main()
+{
+
+	Stablo s = NULL;
+	int broj = 0;
+	int brojac = 0;
+	while (brojac < 10)
+	{
+		broj = Generiraj(300, 700);
+		s = UnosUStablo(s, broj, &brojac);
+		if (s == NULL)
+			return GRESKAALOKACIJE;
+	}
+	IspisPreorder(s);
+	return 0;
+}
+int Generiraj(int min, int max)
+{
+	return rand()%(max - min) + min;
+}
+Stablo UnosUStablo(Stablo s, int x, int* brojac)
+{
+	if (s == NULL)
+	{
+		Stablo s;
+		s = (Stablo)malloc(sizeof(Cvor));
+		if (s == NULL)
+			return NULL;
+		s->broj = x;
+		s->L = NULL;
+		s->D = NULL;
+		(*brojac)++;
+	}
+	else if (s->broj > x)
+		s->L = UnosUStablo(s->L, x, brojac);
+	else if (s->broj < x)
+		s->D = UnosUStablo(s->D, x, brojac);
+	else
+		printf("Element vec postoji!\n");
+	return s;
+
+}
+void IspisPreorder(Stablo s)
+{
+	if (s != NULL)
+	{
+		printf("%d\t", s->broj);
+		IspisPreorder(s->L);
+		IspisPreorder(s->D);
+	}
+
+
+}
