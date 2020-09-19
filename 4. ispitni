@@ -1,0 +1,99 @@
+/***
+Napisati program koji generira slučajne brojeve u opsegu od 50-80. Ukoliko je generirani broj paran
+sprema se u vezanu listu parnih brojeva i to u padajućem redoslijedu (od najvećeg prema najmanjem).
+Ukoliko je broj neparan sprema se u vezanu listu neparnih brojeva, također u padajućem redoslijedu. Niti
+jedna vezana lista ne smije sadržavati dva ista elementa. Unos traje sve dok obje liste ne sadrže 10
+elemenata. Treba ispisivati koji se broj generira i na kraju ispisati obje liste.
+
+**/
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include<time.h>
+#define GRESKAALOKACIJE -1;
+
+struct _lista;
+typedef struct _lista* Position;
+typedef struct _lista
+{
+	int broj;
+	Position next;
+
+}Lista;
+int Generiraj(int, int);
+int SortiraniUnos(Position, int, int*);
+void Ispis(Position);
+void Dealokacija(Position);
+int main()
+{
+	Lista head1;
+	head1.next=NULL;
+	int brojanje1=0;
+	Lista head2;
+	head2.next=NULL;
+	int brojanje2 = 0;
+	int broj = 0;
+	int succ = 0;
+
+	while (brojanje1 < 10 || brojanje2 < 10)
+	{
+		broj = Generiraj(50, 80);
+		printf("Generiran je broj %d\n", broj);
+		if (broj % 2 == 0)
+		{
+			succ = SortiraniUnos(&head1, broj, &brojanje1);
+		}
+		else
+			succ= SortiraniUnos(&head2, broj, &brojanje2);
+	}
+	printf("\nParni:\n");
+	Ispis(head1.next);
+	printf("\nNeparni:\n");
+	Ispis(head2.next);
+
+	Dealokacija(&head1);
+	Dealokacija(&head2);
+	return 0;
+}
+int Generiraj(int min, int max)
+{
+	return rand() % (max - min) + min;
+
+}
+int SortiraniUnos(Position p, int x, int* brojanje)
+{
+	while (p->next != NULL && p->next->broj > x)
+		p = p->next;
+	if (p->next == NULL || p->next->broj != x)
+	{
+		Position q;
+		q = (Position)malloc(sizeof(Lista));
+		if (q == NULL)
+			return GRESKAALOKACIJE;
+		q->broj = x;
+		q->next = p->next;
+		p->next = q;
+		(*brojanje)++;
+	}
+	
+}
+void Ispis(Position p)
+{
+	while (p != NULL)
+	{
+		printf("%d\t", p->broj);
+		p = p->next;
+	}
+
+}
+void Dealokacija(Position p)
+{
+	Position temp;
+	while (p->next != NULL)
+	{
+		temp = p->next;
+		p = p->next->next;
+		free(temp);
+		
+	}
+}
