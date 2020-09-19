@@ -1,0 +1,201 @@
+/**
+Napisati program koji za tri različita predmeta čita ime i prezime studenta te njegovu ocjenu.Podaci o
+svakom predmetu se nalaze u odvojenoj datoteci i iz svake datoteke je potrebno kreirati vezanu listu i
+ispisati je.
+a) Nakon toga potrebno je kreirati novu listu koja sadrži imena studenata koji su položili sva tri
+predmeta.
+b) Nadopuniti zadatak pod a) tako da se ispiše nova vezana lista koja osim što sadrži imena
+studenata, sadrži i njihovu prosječnu ocjenu iz ta tri predmeta.
+*/
+#define _CRT_SECURE_NO_WARNINGS
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#define BUFFER 1024
+#define GRESKAALOKACIJE -1
+#define NEPOSTOJI -2
+
+struct _lista;
+typedef struct _lista* Position;
+typedef struct _lista
+{
+	char* ime;
+	char* prezime;
+	int ocjena;
+	Position next;
+
+
+}Lista;
+
+int CitajIzDat(Position);
+int UnosUListu(Position, char*, char*, int);
+void Dealokacija(Position);
+int NovaLista(Position, Position, Position, Position);
+int Polozili(Position, char*, char*, int);
+void Ispis(Position);
+
+int main()
+{
+	Lista l1;
+	l1.next = NULL;
+	Lista l2;
+	l2.next = NULL;
+	Lista l3;
+	l3.next = NULL;
+	Lista l4;
+	l4.next = NULL;
+	int succ = 0;
+	succ = CitajIzDat(&l1);
+	if (succ == GRESKAALOKACIJE || succ == NEPOSTOJI)
+		return succ;
+	succ = CitajIzDat(&l2);
+	if (succ == GRESKAALOKACIJE || succ == NEPOSTOJI)
+		return succ;
+	succ = CitajIzDat(&l3);
+	if (succ == GRESKAALOKACIJE || succ == NEPOSTOJI)
+		return succ;
+
+	succ = NovaLista(&l1, &l2, &l3, &l4);
+	if (succ == GRESKAALOKACIJE || succ == NEPOSTOJI)
+		return succ;
+
+	Ispis(l4.next);
+
+	Dealokacija(&l1);
+	Dealokacija(&l2);
+	Dealokacija(&l3);
+	Dealokacija(&l4);
+	return 0;
+}
+
+int CitajIzDat(Position p)
+{
+	FILE* fp = NULL;
+	char* imedatoteke=NULL;
+	char* ime=NULL;
+	char* prezime=NULL;
+	int ocjena=0;
+
+	imedatoteke = (char*)malloc(BUFFER*sizeof(char));
+	if (imedatoteke == NULL)
+		return GRESKAALOKACIJE;
+
+	ime= (char*)malloc(BUFFER * sizeof(char));
+	if (ime == NULL)
+		return GRESKAALOKACIJE;
+
+	prezime = (char*)malloc(BUFFER * sizeof(char));
+	if (prezime == NULL)
+		return GRESKAALOKACIJE;
+
+	printf("Unesite ime datoteke:\n");
+	scanf("%s", imedatoteke);
+	strcat(imedatoteke, ".txt");
+
+	fp = fopen(imedatoteke, "r");
+	if (fp == NULL)
+		return NEPOSTOJI;
+
+	while (!feof(fp))
+	{
+		fscanf(fp, "%s %s %d", ime, prezime, &ocjena);
+		int succ = UnosUListu(p, ime, prezime, ocjena);
+		if (succ == GRESKAALOKACIJE)
+			return succ;
+	}
+	fclose(fp);
+	return 0;
+}
+int UnosUListu(Position p, char* ime, char* prezime, int ocjena)
+{
+	Position q;
+	q = (Position)malloc(sizeof(Lista));
+
+	if (q == NULL)
+		return GRESKAALOKACIJE;
+
+	q->ime = (char*)malloc(BUFFER * sizeof(char));
+	if (q->ime == NULL)
+		return GRESKAALOKACIJE;
+
+	q->prezime = (char*)malloc(BUFFER * sizeof(char));
+	if (q->prezime == NULL)
+		return GRESKAALOKACIJE;
+
+	strcpy(q->ime, ime);
+	strcpy(q->prezime, prezime);
+	q->ocjena = ocjena;
+
+	while (p->next != NULL) //Unos na kraj!
+		p = p->next;
+
+	q->next = p->next;
+	p->next = q;
+	
+	return 0;
+}
+
+int NovaLista(Position p1, Position p2, Position p3, Position p4)
+{
+	int succ = 0;
+	while (p1->next != NULL && p2->next != NULL && p3->next != NULL)
+	{
+		if (p1->next->ocjena > 1 && p2->next->ocjena > 1 && p3->next->ocjena > 1)
+		{
+
+			int prosjek = (p1->next->ocjena + p2->next->ocjena + p3->next->ocjena) / 3;
+			succ = Polozili(p4, p1->next->ime, p1->next->prezime, prosjek);
+
+		}
+		p1 = p1->next;
+		p2 = p2->next;
+		p3 = p3->next;
+	}
+	return 0;
+}
+
+int Polozili(Position p, char* ime, char* prezime, int prosjek)
+{
+	Position q;
+	q = (Position)malloc(sizeof(Lista));
+
+	if (q == NULL)
+		return GRESKAALOKACIJE;
+
+	q->ime = (char*)malloc(BUFFER * sizeof(char));
+	if (q->ime == NULL)
+		return GRESKAALOKACIJE;
+
+	q->prezime = (char*)malloc(BUFFER * sizeof(char));
+	if (q->prezime == NULL)
+		return GRESKAALOKACIJE;
+
+	strcpy(q->ime, ime);
+	strcpy(q->prezime, prezime);
+	q->ocjena = prosjek;
+
+	while (p->next != NULL)
+		p = p->next;
+	q->next = p->next;
+	p->next = q;
+	return 0;
+}
+void Ispis(Position p)
+{
+	while (p != NULL)
+	{
+		printf("%s %s %d\n", p->ime, p->prezime, p->ocjena);
+		p = p->next;
+	}
+}
+void Dealokacija(Position p)
+{
+	Position temp;
+	while (p->next != NULL)
+	{
+		temp = p->next;
+		p->next = p->next->next;
+		free(temp);
+	}
+
+}
