@@ -1,0 +1,223 @@
+/**
+Napisati program koji iz datoteke čita dio teksta, riječ po riječ i unosi u binarno stablo pretraživanja
+(maksimalna duljina riječi 1024 znaka). Ispisati binarno stablo na „inorder“ način.
+Iz binarnog stabla kreirati dvije datoteke, u prvoj se nalaze sve riječi koje počinju samoglasnikom, a u
+drugoj sve riječi koje počinju suglasnikom. Riječi zapisane u datotekama moraju biti sortirane po abecedi.
+**/
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define BUFFER 1024
+#define GRESKAALOKACIJE -1
+#define NEPOSTOJI -2
+
+struct _lista;
+typedef struct _lista* Position;
+typedef struct _lista
+{
+	char* rijec;
+	Position next;
+
+}Lista;
+
+struct _cvor;
+typedef struct _cvor* Stablo;
+typedef struct _cvor
+{
+	char* rijec;
+	Stablo L;
+	Stablo D;
+
+}Cvor;
+
+Stablo CitajIzDat(Stablo);
+Stablo UnosUStablo(Stablo, char*);
+void IspisInorder(Stablo);
+int DodajUListu(Position, char*);
+int Pretrazivanje(Stablo, Position, Position);
+void IspisListe(Position);
+int UnosUDatoteku(Position);
+
+int main()
+{
+	Stablo s = NULL;
+	Lista l1;
+	l1.next = NULL;
+	Lista l2;
+	l2.next = NULL;
+	int succ = 0;
+	FILE* fp1 = NULL;
+	FILE* fp2 = NULL;
+
+	s = CitajIzDat(s);
+
+	if (s == NULL)
+		return NULL;
+
+	printf("Ispis inorder:\n");
+	IspisInorder(s);
+
+	succ = Pretrazivanje(s, &l1, &l2);
+	if (succ == GRESKAALOKACIJE)
+		return succ;
+	succ = UnosUDatoteku(l1.next);
+	if (succ == GRESKAALOKACIJE||succ==NEPOSTOJI)
+		return succ;
+	succ = UnosUDatoteku(l2.next);
+	if (succ == GRESKAALOKACIJE || succ == NEPOSTOJI)
+		return succ;
+
+	printf("\nSamoglasnici:\n");
+	IspisListe(l1.next);
+	printf("\nSuglasnici:\n");
+	IspisListe(l2.next);
+
+	return 0;
+}
+Stablo CitajIzDat(Stablo s)
+{
+	char* filename=NULL;
+	char* rijec = NULL;
+	FILE* fp = NULL;
+	filename = (char*)malloc(BUFFER * sizeof(char));
+	if (filename == NULL)
+		return NULL;
+	rijec = (char*)malloc(BUFFER * sizeof(char));
+	if (rijec == NULL)
+		return NULL;
+
+	printf("\nUnesite ime datoteke:\n");
+	scanf("%s", filename);
+	strcat(filename, ".txt");
+
+	fp = fopen(filename, "r");
+	if (fp == NULL)
+		return NULL;
+
+	while (!feof(fp))
+	{
+		fscanf(fp, "%s ", rijec);
+		s = UnosUStablo(s, rijec);
+		if (s == NULL)
+			return NULL;
+	}
+
+	return s;
+}
+Stablo UnosUStablo(Stablo s, char* rijec)
+{
+	if (s == NULL)
+	{
+		s = (Stablo)malloc(sizeof(Cvor));
+		if (s == NULL)
+			return NULL;
+
+		s->rijec = (char*)malloc(BUFFER * sizeof(char));
+		if (s->rijec == NULL)
+			return NULL;
+
+		strcpy(s->rijec, rijec);
+		s->L = NULL;
+		s->D = NULL;
+	}
+	else if (strcmp(s->rijec, rijec) > 0)
+		s->L = UnosUStablo(s->L, rijec);
+	else if (strcmp(s->rijec, rijec) < 0)
+		s->D = UnosUStablo(s->D, rijec);
+	else
+		printf("Element vec postoji!\n");
+	return s;
+}
+void IspisInorder(Stablo s)
+{
+	if (s != NULL)
+	{
+		IspisInorder(s->L);
+		printf("%s\t", s->rijec);
+		IspisInorder(s->D);
+	}
+
+}
+int DodajUListu(Position p, char* rijec)
+{
+	Position q;
+	q = (Position)malloc(sizeof(Lista));
+	if (q == NULL)
+		return GRESKAALOKACIJE;
+
+	q->rijec = (char*)malloc(BUFFER * sizeof(char));
+	if (q->rijec == NULL)
+		return GRESKAALOKACIJE;
+
+	strcpy(q->rijec, rijec);
+
+	while (p->next != NULL&&strcmp(p->next->rijec, rijec)<0)
+		p = p->next;
+
+	q->next = p->next;
+	p->next = q;
+	return 0;
+}
+int Pretrazivanje(Stablo s, Position p1, Position p2)
+{
+	int succ = 0;
+	if (s != NULL)
+	{
+		Pretrazivanje(s->L, p1, p2);
+		Pretrazivanje(s->D, p1, p2);
+
+		if (*s->rijec == 'a' || *s->rijec == 'e' || *s->rijec == 'i' || *s->rijec == 'o' || *s->rijec == 'u')
+		{
+			succ = DodajUListu(p1, s->rijec);
+			if (succ == GRESKAALOKACIJE)
+				return succ;
+		}
+		else
+		{
+			succ = DodajUListu(p2, s->rijec);
+			if (succ == GRESKAALOKACIJE)
+				return succ;
+		}
+	}
+
+	return 0;
+
+}
+
+int UnosUDatoteku(Position p)
+{
+	char* filename = NULL;
+	FILE* fp = NULL;
+
+	filename = (char*)malloc(BUFFER * sizeof(char));
+	if (filename == NULL)
+		return GRESKAALOKACIJE;
+
+	printf("Unesite ime datoteke:\n");
+	scanf("%s", filename);
+	strcat(filename, ".txt");
+
+	fp = fopen(filename, "w");
+	if (fp == NULL)
+		return NEPOSTOJI;
+
+	while (p != NULL)
+	{
+		fprintf(fp, "%s\n", p->rijec);
+		p = p->next;
+	}
+	fclose(fp);
+	return 0;
+}
+
+
+void IspisListe(Position p)
+{
+	while (p != NULL)
+	{
+		printf("%s\n", p->rijec);
+		p = p->next;
+	}
+}
